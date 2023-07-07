@@ -3,7 +3,10 @@ package shell
 import (
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
+
+	"github.com/bpjordan/multigit/pkg/status"
 )
 
 type shellResult struct {
@@ -20,6 +23,12 @@ func RunCmd(bin string, args, repo_paths []string) {
 	for _, path := range repo_paths {
 		go startCmd("git", args, path, results)
 	}
+
+	sb, err := status.StartStatusBar("Running command", repo_paths)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to create status bar: ", err.Error())
+	}
+	defer sb.Cleanup()
 
 	for i := 0; i < len(repo_paths); i++ {
 		result := <- results
@@ -39,7 +48,11 @@ func RunCmd(bin string, args, repo_paths []string) {
 			}
 			fmt.Println()
 		}
+
+		sb.PopTask(result.dir)
 	}
+
+	close(results)
 }
 
 func startCmd(cmd string, args []string, dir string, resultPipe chan shellResult) {
