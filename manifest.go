@@ -1,16 +1,29 @@
 package main
 
-import "os"
-import "gopkg.in/yaml.v3"
+import (
+	"os"
 
-type manifest struct {
-	repos []struct {
-		path           string
-		default_branch string
-	}
+	"gopkg.in/yaml.v3"
+)
+
+type Manifest struct {
+	repos map[string]Repository
 }
 
-func readManifest(file string) (*manifest, error) {
+type Repository struct {
+	path string
+	default_branch *string
+}
+
+func (manifest Manifest) paths() (p []string) {
+	for _, repo := range manifest.repos {
+		p = append(p, repo.path)
+	}
+
+	return
+}
+
+func readManifest(file string) (*Manifest, error) {
 
 	f, err := os.ReadFile(file)
 
@@ -18,7 +31,7 @@ func readManifest(file string) (*manifest, error) {
 		return nil, err
 	}
 
-	var manifest manifest
+	var manifest Manifest
 
 	if err := yaml.Unmarshal(f, &manifest); err != nil {
 		return nil, err
@@ -27,7 +40,14 @@ func readManifest(file string) (*manifest, error) {
 	return &manifest, nil
 }
 
-func writeManifest(manifest manifest) error {
+func writeManifest(manifest Manifest) error {
+
+	yamltext, err := yaml.Marshal(manifest)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(*GlobalOptions.ManifestPath, yamltext, 0o644)
 
 	return nil
 }

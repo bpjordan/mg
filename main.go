@@ -1,11 +1,16 @@
 package main
 
 import (
-	"log"
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/hellflame/argparse"
 )
+
+var GlobalOptions struct {
+	ManifestPath *string
+}
 
 func main() {
 
@@ -13,10 +18,12 @@ func main() {
 	parser := argparse.NewParser("mg", "Utility to manage several git repositories simultaneously", &argparse.ParserConfig{
 		WithColor: true,
 		WithHint:  true,
+		ContinueOnHelp: false,
 	})
 
-	manifestPath := parser.String("m", "manifest", &argparse.Option{
-		Default: ".mg.yaml",
+	GlobalOptions.ManifestPath = parser.String("m", "manifest", &argparse.Option{
+		Default: ".mg.yml",
+		Help: "Path to the yaml file with paths to repositories",
 	})
 
 	// GIT subcommand
@@ -35,18 +42,23 @@ func main() {
 	sh_bin := sh_pass.String("", "bin", &argparse.Option{Positional: true, Help: "Binary to run in all repos", Required: true})
 	sh_args := sh_pass.Strings("", "arg", &argparse.Option{Positional: true, Help: "Arguments passed to binary"})
 
-	parser.Parse(nil)
+	if e := parser.Parse(nil); e != nil {
+		fmt.Println(e.Error())
+		return
+	}
 
-	_, err := readManifest(*manifestPath)
+	manifest, err := readManifest(*GlobalOptions.ManifestPath)
 
 	if err != nil {
-		log.Fatal("Failed to read manifest: ", err)
+		fmt.Printf("Error reading manifest file %s: %s\n", *GlobalOptions.ManifestPath, err)
+		os.Exit(1)
 	}
 
 	/* EXECUTE SUBCOMMANDS */
 	switch {
 	case git_pass.Invoked:
 		println("Git args: ", strings.Join(*git_args, ", "))
+		RunCmd("git", *git_args, manifest.paths())
 	case sh_pass.Invoked:
 		println("Shell args: ", *sh_bin, strings.Join(*sh_args, ", "))
 	}
