@@ -1,7 +1,8 @@
-package main
+package shell
 
 import (
 	"fmt"
+	"io"
 	"os/exec"
 )
 
@@ -63,19 +64,31 @@ func startCmd(cmd string, args []string, dir string, resultPipe chan shellResult
 		return
 	}
 
-	err = task.Run()
+	err = task.Start()
+
+	stderrBytes, err := io.ReadAll(stderr)
+	result.stderr = string(stderrBytes)
+	if err != nil {
+		result.err = err
+		resultPipe <- result
+		return
+	}
+
+	stdoutBytes, err := io.ReadAll(stdout)
+	result.stdout = string(stdoutBytes)
+	if err != nil {
+		result.err = err
+		resultPipe <- result
+		return
+	}
+
+	err = task.Wait()
 	if exitErr, isExitErr := err.(*exec.ExitError); isExitErr {
 		result.exit = exitErr.ExitCode()
 	} else {
 		result.err = err
 	}
 
-	buf := make([]byte, 0)
-	_, err = stdout.Read(buf)
-	result.stdout = string(buf)
-
-	_, err = stderr.Read(buf)
-	result.stderr = string(buf)
 
 	resultPipe <- result
 }
