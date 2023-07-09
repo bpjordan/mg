@@ -8,6 +8,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/fatih/color"
 	"golang.org/x/sys/unix"
 )
 
@@ -19,7 +20,7 @@ type StatusBar struct {
     once sync.Once
 }
 
-func StartStatusBar(description string, tasks []string) (*StatusBar, error) {
+func StartStatusBar(tasks []string) (*StatusBar, error) {
 
     sb := &StatusBar{
 	totalTasks: uint(len(tasks)),
@@ -108,14 +109,14 @@ func (sb *StatusBar) render() {
     numRemaining := sb.totalTasks - uint(len(sb.remainingTasks))
 
     /// Actually print stuff here
-    line := fmt.Sprintf("[%d/%d] %s", numRemaining, sb.totalTasks, strings.Join(sb.remainingTasks, ", "))
-
+    number := color .New(color.FgYellow).Sprintf("[%d/%d]", numRemaining, sb.totalTasks)
+    line := fmt.Sprintf("%s %s", number, strings.Join(sb.remainingTasks, ", "))
 
     if len(line) > int(sb.wscol) {
 	line = string([]rune(line)[:sb.wscol-1])
     }
 
-    fmt.Printf("\x1B[%d;H", sb.wsrow)
+    fmt.Printf("\x1B[%d;H", sb.wsrow) // Set cursor position to reserved row
     fmt.Print(line)
 
 }
