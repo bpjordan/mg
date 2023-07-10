@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/davecgh/go-spew/spew"
 )
 
 var debug = &cobra.Command{
@@ -14,9 +15,7 @@ var debug = &cobra.Command{
 	DisableFlagsInUseLine: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Debug args: ", strings.Join(args, " "))
-		if manifestInventory != nil {
-			fmt.Println("Manifest: ", *manifestInventory)
-		}
+		spew.Dump(manifestInventory)
 	},
 }
 

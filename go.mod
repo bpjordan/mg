@@ -3,6 +3,7 @@ module github.com/bpjordan/multigit
 go 1.20
 
 require (
+	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/color v1.15.0
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/sys v0.10.0
