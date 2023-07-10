@@ -23,7 +23,7 @@ var git = &cobra.Command{
 		numSuccess, numFailed, numError := shell.RunParallelCmd(
 			"git",
 			args,
-			manifestInventory.Paths(),
+			*manifestInventory,
 		)
 
 		reportLine := make([]string, 0, 3)
