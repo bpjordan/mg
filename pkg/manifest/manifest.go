@@ -10,6 +10,7 @@ var CommandManifest Manifest
 
 type Manifest struct {
 	Repos []Repository `yaml:"repos"`
+	Groups map[string][]string `yaml:"groups,omitempty"`
 }
 
 type Repository struct {
