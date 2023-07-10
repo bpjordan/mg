@@ -79,5 +79,18 @@ func (r *Repository) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 
+	if r.Name == "" {
+		r.Name = r.Path
+	}
+
 	return nil
+}
+
+func (r Repository) MarshalYAML() (interface{}, error) {
+
+	if r.Path == r.Name && r.Home == "" {
+		return r.Path, nil
+	}
+
+	return r, nil
 }
