@@ -2,12 +2,13 @@ package shell
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 
 	"github.com/bpjordan/multigit/pkg/manifest"
-	"github.com/bpjordan/multigit/pkg/status"
+	"github.com/bpjordan/multigit/pkg/runtime"
 	"github.com/fatih/color"
 )
 
@@ -29,7 +30,7 @@ func RunParallelCmd(bin string, args []string, man manifest.Manifest) (numSucces
 		go startCmd(bin, args, repo.Name, repo.Path, taskStarted, taskFinished)
 	}
 
-	sb, err := status.StartStatusBar(uint(len(man.Repos)))
+	sb, err := runtime.Start(context.TODO(), uint(len(man.Repos)))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to create status bar: \n", err.Error())
 	}
