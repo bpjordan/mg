@@ -13,20 +13,23 @@ import (
 )
 
 type StatusBar struct {
-    totalTasks uint
-    remainingTasks []string
+    totalTasks, remainingTasks uint
+    activeTasks []string
     wscol, wsrow uint16
     sigWinch, sigTerm chan os.Signal
+    finished chan struct{}
     once sync.Once
 }
 
-func StartStatusBar(tasks []string) (*StatusBar, error) {
+func StartStatusBar(totalTasks uint) (*StatusBar, error) {
 
     sb := &StatusBar{
-	totalTasks: uint(len(tasks)),
-	remainingTasks: tasks[:],
+	totalTasks: totalTasks,
+	remainingTasks: totalTasks,
+	activeTasks: make([]string, 0, totalTasks),
 	sigWinch: make(chan os.Signal),
 	sigTerm: make(chan os.Signal),
+	finished: make(chan struct{}),
     }
 
     signal.Notify(sb.sigWinch, syscall.SIGWINCH)
@@ -40,8 +43,7 @@ func StartStatusBar(tasks []string) (*StatusBar, error) {
 	    case <- sb.sigWinch:
 		sb.reserve()
 	    case <- sb.sigTerm:
-		sb.Cleanup()
-		os.Exit(255)
+		sb.finished <- struct{}{}
 	    }
 	}
     }()
@@ -50,17 +52,31 @@ func StartStatusBar(tasks []string) (*StatusBar, error) {
     return sb, nil
 }
 
-func (sb *StatusBar) PopTask(task string) error {
-    for idx, v := range sb.remainingTasks {
-	if task == v {
-	    sb.remainingTasks = append(sb.remainingTasks[:idx], sb.remainingTasks[idx+1:]...)
+func (sb *StatusBar) PushTask(task string) {
+    sb.activeTasks = append(sb.activeTasks, task)
+    sb.render()
+}
 
+func (sb *StatusBar) PopTask(task string) error {
+    for idx, v := range sb.activeTasks {
+	if task == v {
+	    sb.activeTasks = append(sb.activeTasks[:idx], sb.activeTasks[idx+1:]...)
+	    sb.remainingTasks--
 	    sb.render()
+
+	    if sb.remainingTasks == 0 {
+		close(sb.finished)
+	    }
+
 	    return nil
 	}
     }
 
     return fmt.Errorf("task %s not found", task)
+}
+
+func (sb *StatusBar) Finished() chan struct{} {
+    return sb.finished
 }
 
 func (sb *StatusBar) reserve() error {
@@ -84,8 +100,6 @@ func (sb *StatusBar) reserve() error {
 }
 
 func (sb *StatusBar) Cleanup() {
-    sb.once.Do(func() {close(sb.sigTerm)})
-    sb.once.Do(func() {close(sb.sigWinch)})
 
     fmt.Print("\x1B7")                 // Save the cursor position
     fmt.Printf("\x1B[0;%dr", sb.wsrow) // Drop margin reservation
@@ -106,11 +120,11 @@ func (sb *StatusBar) render() {
     fmt.Print("\x1B[?47l") // Restore screen
     defer fmt.Print("\x1B8") // Restore cursor position
 
-    numRemaining := sb.totalTasks - uint(len(sb.remainingTasks))
+    numRemaining := sb.totalTasks - uint(len(sb.activeTasks))
 
     /// Actually print stuff here
     number := color .New(color.FgYellow).Sprintf("[%d/%d]", numRemaining, sb.totalTasks)
-    line := fmt.Sprintf("%s %s", number, strings.Join(sb.remainingTasks, ", "))
+    line := fmt.Sprintf("%s %s", number, strings.Join(sb.activeTasks, ", "))
 
     if len(line) > int(sb.wscol) {
 	line = string([]rune(line)[:sb.wscol-1])

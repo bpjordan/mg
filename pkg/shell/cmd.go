@@ -1,8 +1,8 @@
 package shell
 
 import (
+	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 
@@ -20,100 +20,91 @@ type shellResult struct {
 
 func RunParallelCmd(bin string, args []string, man manifest.Manifest) (numSuccess, numFailed, numError uint) {
 
-	results := make(chan shellResult)
-	defer close(results)
+	taskFinished := make(chan shellResult)
+	taskStarted := make(chan string)
+
+	defer close(taskFinished)
 
 	for _, repo := range man.Repos {
-		go startCmd("git", args, repo.Name, repo.Path, results)
+		go startCmd(bin, args, repo.Name, repo.Path, taskStarted, taskFinished)
 	}
 
-	sb, err := status.StartStatusBar(man.Names())
+	sb, err := status.StartStatusBar(uint(len(man.Repos)))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to create status bar: \n", err.Error())
 	}
 	defer sb.Cleanup()
 
-	for i := 0; i < len(man.Repos); i++ {
-		result := <- results
+	for {
+		select {
+		case <- sb.Finished():
+			sb.Cleanup()
+			return
 
-		switch {
-		case result.err != nil:
-			numError++
-			fmt.Printf("Error executing command in %s: %e\n", result.name, result.err)
+		case task := <- taskStarted:
+			sb.PushTask(task)
 
-		case result.exit != 0:
-			numFailed++
-			fmt.Printf("%s (repo %s) (return code %d):\n", color.RedString("Error"), result.name, result.exit)
-			fmt.Println(result.stderr)
-
-		default:
-			numSuccess++
-			fmt.Printf("%s (%s)\n", color.GreenString("Success"), result.name)
-
-			if result.stdout != "" {
-				fmt.Println(result.stdout)
-			}
-
-			if result.stderr != "" {
-				fmt.Println(color.HiYellowString("Warning"), "(stderr):")
-				fmt.Println(result.stderr)
-			}
-
+		case result := <- taskFinished:
+			printTaskReport(result, &numSuccess, &numFailed, &numError)
+			sb.PopTask(result.name)
 		}
 
-		sb.PopTask(result.name)
 	}
-
-	return
 }
 
-func startCmd(cmd string, args []string, name, dir string, resultPipe chan shellResult) {
+func startCmd(
+	cmd string, args []string, name, dir string,
+	start chan string, finish chan shellResult,
+) {
+
+	var stdout, stderr bytes.Buffer
 
 	result := shellResult{}
 	result.name = name
 
 	task := exec.Command(cmd, args...)
 	task.Dir = dir
+	task.Stdout = &stdout
+	task.Stderr = &stderr
 
-	stdout, err := task.StdoutPipe()
-	if err != nil {
-		result.err = err
-		resultPipe <- result
-		return
-	}
+	start <- name
+	err := task.Run()
 
-	stderr, err := task.StderrPipe()
-	if err != nil {
-		result.err = err
-		resultPipe <- result
-		return
-	}
+	result.stdout = stdout.String()
+	result.stderr = stderr.String()
 
-	err = task.Start()
-
-	stderrBytes, err := io.ReadAll(stderr)
-	result.stderr = string(stderrBytes)
-	if err != nil {
-		result.err = err
-		resultPipe <- result
-		return
-	}
-
-	stdoutBytes, err := io.ReadAll(stdout)
-	result.stdout = string(stdoutBytes)
-	if err != nil {
-		result.err = err
-		resultPipe <- result
-		return
-	}
-
-	err = task.Wait()
 	if exitErr, isExitErr := err.(*exec.ExitError); isExitErr {
 		result.exit = exitErr.ExitCode()
 	} else {
 		result.err = err
 	}
 
+	finish <- result
+}
 
-	resultPipe <- result
+func printTaskReport(result shellResult, numSuccess, numFailed, numError *uint) {
+	switch {
+	case result.err != nil:
+		*numError++
+		fmt.Printf("Error executing command in %s: %e\n", result.name, result.err)
+
+	case result.exit != 0:
+		*numFailed++
+		fmt.Printf("%s (repo %s) (return code %d):\n", color.RedString("Error"), result.name, result.exit)
+		fmt.Println(result.stderr)
+
+	default:
+		*numSuccess++
+		fmt.Printf("%s (%s)\n", color.GreenString("Success"), result.name)
+
+		if result.stdout != "" {
+			fmt.Println(result.stdout)
+		}
+
+		if result.stderr != "" {
+			fmt.Println(color.HiYellowString("Warning"), "(stderr):")
+			fmt.Println(result.stderr)
+		}
+
+	}
 }
