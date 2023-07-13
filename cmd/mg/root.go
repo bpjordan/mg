@@ -42,4 +42,6 @@ func Execute() {
 func init() {
 	rootCmd.Flags().StringVarP(&manifestPath, "manifest", "m", ".mg.yml", "Path to the manifest YAML file")
 	rootCmd.PersistentFlags().UintVarP(&maxConcurrent, "max-connections", "c", 0, "Limit the number of remote operations happening concurrently")
+
+	rootCmd.AddGroup(&cobra.Group{ID: "cmd", Title: "Run Arbitrary Commands"})
 }

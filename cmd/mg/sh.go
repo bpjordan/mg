@@ -13,6 +13,7 @@ import (
 var sh = &cobra.Command{
 	Use: "sh BIN (ARGS...| -- FLAGS... ARGS...)",
 	Short: "Run an arbitrary shell command in all repositories",
+	GroupID: "cmd",
 	DisableFlagsInUseLine: true,
 	Args: cobra.MinimumNArgs(1),
 	TraverseChildren: true,

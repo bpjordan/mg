@@ -8,6 +8,7 @@ import (
 var git = &cobra.Command{
 	Use: "git {ARGS...| -- FLAGS... ARGS...}",
 	Aliases: []string{"g"},
+	GroupID: "cmd",
 	Short: "Run an arbitrary `git` command in all repositories",
 	DisableFlagsInUseLine: true,
 	Args: cobra.MinimumNArgs(1),
