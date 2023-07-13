@@ -25,7 +25,11 @@ func RunParallelCmd(rt *runtime.ParallelRuntime, bin string, args []string, man 
 	defer close(taskFinished)
 
 	for _, repo := range man.Repos {
-		go startCmd(bin, args, repo.Name, repo.Path, taskStarted, taskFinished)
+		go startCmd(
+			rt, bin, args,
+			repo.Name, repo.Path,
+			taskStarted, taskFinished,
+		)
 	}
 
 	for {
@@ -46,6 +50,7 @@ func RunParallelCmd(rt *runtime.ParallelRuntime, bin string, args []string, man 
 }
 
 func startCmd(
+	rt *runtime.ParallelRuntime,
 	cmd string, args []string, name, dir string,
 	start chan string, finish chan shellResult,
 ) {
@@ -55,13 +60,18 @@ func startCmd(
 	result := shellResult{}
 	result.name = name
 
-	task := exec.Command(cmd, args...)
+	task := exec.CommandContext(rt.Context(), cmd, args...)
 	task.Dir = dir
 	task.Stdout = &stdout
 	task.Stderr = &stderr
 
+	if rt.Acquire() != nil {
+		return
+	}
+
 	start <- name
 	err := task.Run()
+	rt.Release()
 
 	result.stdout = stdout.String()
 	result.stderr = stderr.String()

@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+
+	"golang.org/x/sync/semaphore"
 )
 
 type ParallelRuntime struct {
@@ -18,9 +20,10 @@ type ParallelRuntime struct {
     once sync.Once
     ctx context.Context
     cancel context.CancelFunc
+    sem *semaphore.Weighted
 }
 
-func Start(ctx context.Context, totalTasks uint) (*ParallelRuntime, error) {
+func Start(ctx context.Context, totalTasks, maxConcurrent uint) (*ParallelRuntime, error) {
 
     ctx, cancel := context.WithCancel(ctx)
     sb := &ParallelRuntime{
@@ -31,6 +34,10 @@ func Start(ctx context.Context, totalTasks uint) (*ParallelRuntime, error) {
 	sigTerm: make(chan os.Signal),
 	ctx: ctx,
 	cancel: cancel,
+    }
+
+    if maxConcurrent > 0 {
+	sb.sem = semaphore.NewWeighted(int64(maxConcurrent))
     }
 
     signal.Notify(sb.sigWinch, syscall.SIGWINCH)
@@ -68,6 +75,22 @@ func (rt *ParallelRuntime) Context() context.Context {
 func (sb *ParallelRuntime) PushTask(task string) {
     sb.activeTasks = append(sb.activeTasks, task)
     sb.renderStatusBar()
+}
+
+func (rt *ParallelRuntime) Acquire() error {
+    if rt.sem == nil {
+	return nil
+    }
+
+    return rt.sem.Acquire(rt.ctx, 1)
+}
+
+func (rt *ParallelRuntime) Release() {
+    if rt.sem == nil {
+	return
+    }
+
+    rt.sem.Release(1)
 }
 
 func (sb *ParallelRuntime) PopTask(task string) error {

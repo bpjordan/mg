@@ -11,12 +11,12 @@ import (
 )
 
 var git = &cobra.Command{
-	Use: "git ARG ...",
+	Use: "git {ARGS...| -- FLAGS... ARGS...}",
 	Aliases: []string{"g"},
 	Short: "Run an arbitrary `git` command in all repositories",
-	DisableFlagParsing: true,
 	DisableFlagsInUseLine: true,
 	Args: cobra.MinimumNArgs(1),
+	TraverseChildren: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		args = append([]string{"-c", "color.ui=always"}, args...)
@@ -24,6 +24,7 @@ var git = &cobra.Command{
 		rt, err := runtime.Start(
 			cmd.Context(),
 			uint(len(manifestInventory.Repos)),
+			maxConcurrent,
 		)
 		if err != nil {
 			return err

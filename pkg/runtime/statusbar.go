@@ -49,7 +49,7 @@ func (sb *ParallelRuntime) renderStatusBar() {
     fmt.Print("\x1B[?47l") // Restore screen
     defer fmt.Print("\x1B8") // Restore cursor position
 
-    numRemaining := sb.totalTasks - uint(len(sb.activeTasks))
+    numRemaining := sb.totalTasks - sb.remainingTasks
 
     /// Actually print stuff here
     number := color .New(color.FgYellow).Sprintf("[%d/%d]", numRemaining, sb.totalTasks)
