@@ -3,9 +3,11 @@ package mg
 import (
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/spf13/cobra"
+	"github.com/bpjordan/multigit/pkg/runtime"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/spf13/cobra"
 )
 
 var debug = &cobra.Command{
@@ -15,7 +17,30 @@ var debug = &cobra.Command{
 	DisableFlagsInUseLine: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Debug args: ", strings.Join(args, " "))
-		spew.Dump(manifestInventory)
+		for _, arg := range args {
+			switch arg {
+			case "manifest":
+				spew.Dump(manifestInventory)
+			case "statusline":
+				rt, err := runtime.Start(cmd.Context(), 1, maxConcurrent)
+				if err != nil {
+					fmt.Fprintln(cmd.OutOrStderr(), err)
+				}
+				defer rt.Cleanup()
+
+				for i := 1; i <= 50; i++ {
+					select {
+					case <-rt.Finished():
+						break
+					default:
+						fmt.Println(i)
+						time.Sleep(time.Second)
+					}
+				}
+			default:
+				fmt.Printf("Unknown debug parameter `%s`\n", arg)
+			}
+		}
 	},
 }
 
