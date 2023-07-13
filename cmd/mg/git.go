@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bpjordan/multigit/pkg/runtime"
 	"github.com/bpjordan/multigit/pkg/shell"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -16,11 +17,21 @@ var git = &cobra.Command{
 	DisableFlagParsing: true,
 	DisableFlagsInUseLine: true,
 	Args: cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 
 		args = append([]string{"-c", "color.ui=always"}, args...)
 
+		rt, err := runtime.Start(
+			cmd.Context(),
+			uint(len(manifestInventory.Repos)),
+		)
+		if err != nil {
+			return err
+		}
+		defer rt.Cleanup()
+
 		numSuccess, numFailed, numError := shell.RunParallelCmd(
+			rt,
 			"git",
 			args,
 			*manifestInventory,
@@ -50,6 +61,8 @@ var git = &cobra.Command{
 		}
 
 		fmt.Println(strings.Join(reportLine, ", "))
+
+		return nil
 	},
 }
 

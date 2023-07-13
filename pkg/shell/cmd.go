@@ -2,9 +2,7 @@ package shell
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"os"
 	"os/exec"
 
 	"github.com/bpjordan/multigit/pkg/manifest"
@@ -19,7 +17,7 @@ type shellResult struct {
 	exit int
 }
 
-func RunParallelCmd(bin string, args []string, man manifest.Manifest) (numSuccess, numFailed, numError uint) {
+func RunParallelCmd(rt *runtime.ParallelRuntime, bin string, args []string, man manifest.Manifest) (numSuccess, numFailed, numError uint) {
 
 	taskFinished := make(chan shellResult)
 	taskStarted := make(chan string)
@@ -30,24 +28,18 @@ func RunParallelCmd(bin string, args []string, man manifest.Manifest) (numSucces
 		go startCmd(bin, args, repo.Name, repo.Path, taskStarted, taskFinished)
 	}
 
-	sb, err := runtime.Start(context.TODO(), uint(len(man.Repos)))
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to create status bar: \n", err.Error())
-	}
-	defer sb.Cleanup()
-
 	for {
 		select {
-		case <- sb.Finished():
-			sb.Cleanup()
+		case <- rt.Finished():
+			rt.Cleanup()
 			return
 
 		case task := <- taskStarted:
-			sb.PushTask(task)
+			rt.PushTask(task)
 
 		case result := <- taskFinished:
 			printTaskReport(result, &numSuccess, &numFailed, &numError)
-			sb.PopTask(result.name)
+			rt.PopTask(result.name)
 		}
 
 	}

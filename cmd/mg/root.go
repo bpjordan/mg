@@ -8,8 +8,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var manifestPath *string
-var manifestInventory *manifest.Manifest
+var (
+	manifestPath *string
+	manifestInventory *manifest.Manifest
+)
 
 var rootCmd = &cobra.Command{
 	Short: "multigit - tool for managing massive projects of multiple git repositories",

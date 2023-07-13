@@ -29,7 +29,6 @@ func Start(ctx context.Context, totalTasks uint) (*ParallelRuntime, error) {
 	activeTasks: make([]string, 0, totalTasks),
 	sigWinch: make(chan os.Signal),
 	sigTerm: make(chan os.Signal),
-	finished: make(chan struct{}),
 	ctx: ctx,
 	cancel: cancel,
     }
@@ -45,7 +44,7 @@ func Start(ctx context.Context, totalTasks uint) (*ParallelRuntime, error) {
 	    case <- sb.sigWinch:
 		sb.placeStatusBar()
 	    case <- sb.sigTerm:
-		sb.finished <- struct{}{}
+		sb.cancel()
 	    }
 	}
     }()
@@ -79,7 +78,7 @@ func (sb *ParallelRuntime) PopTask(task string) error {
 	    sb.renderStatusBar()
 
 	    if sb.remainingTasks == 0 {
-		close(sb.finished)
+		sb.cancel()
 	    }
 
 	    return nil
@@ -89,7 +88,7 @@ func (sb *ParallelRuntime) PopTask(task string) error {
     return fmt.Errorf("task %s not found", task)
 }
 
-func (sb *ParallelRuntime) Finished() chan struct{} {
-    return sb.finished
+func (sb *ParallelRuntime) Finished() <-chan struct{} {
+    return sb.ctx.Done()
 }
 
