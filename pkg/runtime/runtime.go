@@ -41,6 +41,7 @@ func Start(ctx context.Context, totalTasks, maxConcurrent uint) (*ParallelRuntim
     }
 
     signal.Notify(sb.sigWinch, syscall.SIGWINCH)
+    signal.Notify(sb.sigTerm, syscall.SIGINT)
     signal.Notify(sb.sigTerm, syscall.SIGTERM)
 
     sb.placeStatusBar()
