@@ -9,7 +9,7 @@ import (
 var CommandManifest Manifest
 
 type Manifest struct {
-	Repos []Repository `yaml:"repos"`
+	UnfilteredRepos []Repository `yaml:"repos"`
 	Groups map[string][]string `yaml:"groups,omitempty"`
 }
 
@@ -19,8 +19,12 @@ type Repository struct {
 	Home string `yaml:"home,omitempty"`
 }
 
+func (manifest Manifest) Repos() []Repository {
+	return manifest.UnfilteredRepos
+}
+
 func (manifest Manifest) Paths() (p []string) {
-	for _, repo := range manifest.Repos {
+	for _, repo := range manifest.UnfilteredRepos {
 		p = append(p, repo.Path)
 	}
 
@@ -28,7 +32,7 @@ func (manifest Manifest) Paths() (p []string) {
 }
 
 func (manifest Manifest) Names() (p []string) {
-	for _, repo := range manifest.Repos {
+	for _, repo := range manifest.UnfilteredRepos {
 		p = append(p, repo.Name)
 	}
 

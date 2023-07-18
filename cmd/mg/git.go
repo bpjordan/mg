@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var git = &cobra.Command{
+var gitCmd = &cobra.Command{
 	Use: "git {ARGS...| -- FLAGS... ARGS...}",
 	Aliases: []string{"g"},
 	GroupID: "cmd",
@@ -27,5 +27,5 @@ var git = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(git)
+	rootCmd.AddCommand(gitCmd)
 }

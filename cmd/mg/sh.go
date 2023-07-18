@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bpjordan/multigit/pkg/manifest"
 	"github.com/bpjordan/multigit/pkg/runtime"
 	"github.com/bpjordan/multigit/pkg/shell"
 	"github.com/fatih/color"
@@ -22,9 +23,16 @@ var sh = &cobra.Command{
 
 func shellCommand(cmd *cobra.Command, args []string) error {
 
+	maxConcurrent, err := cmd.Flags().GetUint("max-connections")
+	if err != nil {
+		return err
+	}
+
+	manifestInventory := cmd.Context().Value(manifestContextKey).(*manifest.Manifest)
+
 		rt, err := runtime.Start(
 			cmd.Context(),
-			uint(len(manifestInventory.Repos)),
+			uint(len(manifestInventory.Repos())),
 			maxConcurrent,
 		)
 		if err != nil {

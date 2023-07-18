@@ -24,7 +24,7 @@ func RunParallelCmd(rt *runtime.ParallelRuntime, bin string, args []string, man 
 
 	defer close(taskFinished)
 
-	for _, repo := range man.Repos {
+	for _, repo := range man.Repos() {
 		go startCmd(
 			rt, bin, args,
 			repo.Name, repo.Path,

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bpjordan/multigit/pkg/manifest"
 	"github.com/bpjordan/multigit/pkg/runtime"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/cobra"
@@ -20,8 +21,11 @@ var debug = &cobra.Command{
 		for _, arg := range args {
 			switch arg {
 			case "manifest":
-				spew.Dump(manifestInventory)
+				manifest := cmd.Context().Value(manifestContextKey).(*manifest.Manifest)
+				spew.Dump(*manifest)
 			case "statusline":
+				maxConcurrent, err := cmd.Flags().GetUint("max-connections")
+
 				rt, err := runtime.Start(cmd.Context(), 1, maxConcurrent)
 				if err != nil {
 					fmt.Fprintln(cmd.OutOrStderr(), err)
