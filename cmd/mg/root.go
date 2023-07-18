@@ -43,9 +43,11 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringP("manifest", "m", ".mg.yml", "Path to the manifest YAML file")
-	rootCmd.PersistentFlags().UintP("max-connections", "c", 0, "Limit the number of remote operations happening concurrently")
+	flags := rootCmd.PersistentFlags()
+	flags.StringP("manifest", "m", ".mg.yml", "Path to the manifest YAML file")
+	flags.UintP("max-connections", "c", 0, "Limit the number of remote operations happening concurrently")
+	flags.CountP("verbose", "v", "")
 
-	rootCmd.AddGroup(&cobra.Group{ID: "cmd", Title: "Run Arbitrary Commands"})
 	rootCmd.AddGroup(&cobra.Group{ID: "repo", Title: "Manage Repositories"})
+	rootCmd.AddGroup(&cobra.Group{ID: "cmd", Title: "Run Arbitrary Commands"})
 }

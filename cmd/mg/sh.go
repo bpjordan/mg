@@ -23,6 +23,11 @@ var sh = &cobra.Command{
 
 func shellCommand(cmd *cobra.Command, args []string) error {
 
+	verbose, err := cmd.Flags().GetCount("verbose")
+	if err != nil {
+		return err
+	}
+
 	maxConcurrent, err := cmd.Flags().GetUint("max-connections")
 	if err != nil {
 		return err
@@ -35,6 +40,7 @@ func shellCommand(cmd *cobra.Command, args []string) error {
 			uint(len(manifestInventory.Repos())),
 			maxConcurrent,
 		)
+
 		if err != nil {
 			return err
 		}
@@ -45,6 +51,7 @@ func shellCommand(cmd *cobra.Command, args []string) error {
 			args[0],
 			args[1:],
 			*manifestInventory,
+			verbose,
 		)
 
 		reportLine := make([]string, 0, 3)

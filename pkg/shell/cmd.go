@@ -17,7 +17,7 @@ type shellResult struct {
 	exit int
 }
 
-func RunParallelCmd(rt *runtime.ParallelRuntime, bin string, args []string, man manifest.Manifest) (numSuccess, numFailed, numError uint) {
+func RunParallelCmd(rt *runtime.ParallelRuntime, bin string, args []string, man manifest.Manifest, verbose int) (numSuccess, numFailed, numError uint) {
 
 	taskFinished := make(chan shellResult)
 	taskStarted := make(chan string)
@@ -42,7 +42,7 @@ func RunParallelCmd(rt *runtime.ParallelRuntime, bin string, args []string, man 
 			rt.PushTask(task)
 
 		case result := <- taskFinished:
-			printTaskReport(result, &numSuccess, &numFailed, &numError)
+			printTaskReport(result, &numSuccess, &numFailed, &numError, verbose)
 			rt.PopTask(result.name)
 		}
 
@@ -85,7 +85,7 @@ func startCmd(
 	finish <- result
 }
 
-func printTaskReport(result shellResult, numSuccess, numFailed, numError *uint) {
+func printTaskReport(result shellResult, numSuccess, numFailed, numError *uint, verbose int) {
 	switch {
 	case result.err != nil:
 		*numError++
@@ -100,12 +100,12 @@ func printTaskReport(result shellResult, numSuccess, numFailed, numError *uint) 
 		*numSuccess++
 		fmt.Printf("%s (%s)\n", color.GreenString("Success"), result.name)
 
-		if result.stdout != "" {
+		if result.stdout != "" && verbose > 0{
 			fmt.Println(result.stdout)
 		}
 
 		if result.stderr != "" {
-			fmt.Println(color.HiYellowString("Warning"), "(stderr):")
+			fmt.Printf("%s (%s)\n", color.HiYellowString("Warning"), result.name)
 			fmt.Println(result.stderr)
 		}
 
