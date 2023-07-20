@@ -98,18 +98,21 @@ func (sb *ParallelRuntime) PopTask(task string) error {
     for idx, v := range sb.activeTasks {
 	if task == v {
 	    sb.activeTasks = append(sb.activeTasks[:idx], sb.activeTasks[idx+1:]...)
-	    sb.remainingTasks--
-	    sb.renderStatusBar()
-
-	    if sb.remainingTasks == 0 {
-		sb.cancel()
-	    }
+	    sb.DecrementCounter()
 
 	    return nil
 	}
     }
 
     return fmt.Errorf("task %s not found", task)
+}
+
+func (sb *ParallelRuntime) DecrementCounter() {
+    sb.remainingTasks--
+    sb.renderStatusBar()
+    if sb.remainingTasks == 0 {
+	sb.cancel()
+    }
 }
 
 func (sb *ParallelRuntime) Finished() <-chan struct{} {
