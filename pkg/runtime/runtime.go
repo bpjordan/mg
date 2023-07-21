@@ -12,6 +12,7 @@ import (
 )
 
 type ParallelRuntime struct {
+    Message string
     totalTasks, remainingTasks uint
     activeTasks []string
     wscol, wsrow uint16

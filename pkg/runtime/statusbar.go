@@ -47,12 +47,18 @@ func (sb *ParallelRuntime) renderStatusBar() {
     fmt.Print("\x1B[?47h") // Save screen
     fmt.Print("\x1B[1J") // Erase from cursor to beginning of screen
     fmt.Print("\x1B[?47l") // Restore screen
-    defer fmt.Print("\x1B8") // Restore cursor position
+
+    defer fmt.Print("\x1B8") // Restore cursor position at end of execution
 
     numRemaining := sb.totalTasks - sb.remainingTasks
 
+    var message string
+    if sb.Message != "" && int(sb.wscol) > len(sb.Message) + 30 {
+	message = sb.Message + " "
+    }
+
     /// Actually print stuff here
-    number := color .New(color.FgYellow).Sprintf("[%d/%d]", numRemaining, sb.totalTasks)
+    number := color.New(color.FgYellow).Sprintf("%s[%d/%d]", message, numRemaining, sb.totalTasks)
     line := fmt.Sprintf("%s %s", number, strings.Join(sb.activeTasks, ", "))
 
     if len(line) > int(sb.wscol) {

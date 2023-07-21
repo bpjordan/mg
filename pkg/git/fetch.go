@@ -1,7 +1,6 @@
 package git
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bpjordan/multigit/pkg/manifest"
@@ -21,7 +20,7 @@ type taskReport struct {
     Err error
 }
 
-type fetchReport struct {
+type FetchReport struct {
     // Tasks which resulted in updates to a repo
     Updated uint
     // Tasks which finished successfully but did not update a repo
@@ -32,13 +31,7 @@ type fetchReport struct {
     Error uint
 }
 
-func Fetch(ctx context.Context, manifest manifest.Manifest, maxConcurrent uint, verbose int) (*fetchReport, error) {
-
-    rt, err := runtime.Start(ctx, uint(len(manifest.Repos())), maxConcurrent)
-    if err != nil {
-        return nil, err
-    }
-    defer rt.Cleanup()
+func Fetch(rt *runtime.ParallelRuntime, manifest manifest.Manifest, maxConcurrent uint, verbose int) (*FetchReport, error) {
 
     taskStarted := make(chan string)
     taskFinished := make(chan taskReport)
@@ -48,7 +41,7 @@ func Fetch(ctx context.Context, manifest manifest.Manifest, maxConcurrent uint, 
         go fetchRepo(rt, repo, taskStarted, taskFinished, taskError)
     }
 
-    var report fetchReport
+    var report FetchReport
 
     for {
 
