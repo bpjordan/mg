@@ -47,7 +47,7 @@ func Execute() {
 func init() {
 	flags := rootCmd.PersistentFlags()
 	flags.StringP("manifest", "m", "", "Path to the manifest YAML file")
-	flags.UintP("max-connections", "c", 0, "Limit the number of remote operations happening concurrently")
+	flags.UintP("max-connections", "c", 0, "Limit the number of simultaneous connections to the upstream repository (useful if your remote utilizes rate limiting)")
 	flags.CountP("verbose", "v", "")
 
 	rootCmd.AddGroup(&cobra.Group{ID: "repo", Title: "Manage Repositories"})

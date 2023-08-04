@@ -6,7 +6,7 @@ import (
 )
 
 var gitCmd = &cobra.Command{
-	Use: "git {ARGS...| -- FLAGS... ARGS...}",
+	Use: "git {<arg>... | -- [flag | arg]...}",
 	Aliases: []string{"g"},
 	GroupID: "cmd",
 	Short: "Run an arbitrary `git` command in all repositories",
