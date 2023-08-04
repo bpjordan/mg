@@ -10,6 +10,7 @@ import (
 	"github.com/bpjordan/multigit/pkg/runtime"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var fetch = &cobra.Command{
@@ -20,19 +21,13 @@ var fetch = &cobra.Command{
 	TraverseChildren: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		manifest := cmd.Context().Value(manifestContextKey).(*manifest.Manifest)
+		maxConcurrent := viper.GetUint("max-connections")
+		verbose := viper.GetInt("verbose")
 
-		maxConcurrent, err := cmd.Flags().GetUint("max-connections")
+		report, err := fetchInRuntime(cmd.Context(), &man, maxConcurrent, verbose)
 		if err != nil {
 			return err
 		}
-
-		verbose, err := cmd.Flags().GetCount("verbose")
-		if err != nil {
-			return err
-		}
-
-		report, err := fetchInRuntime(cmd.Context(), manifest, maxConcurrent, verbose)
 
 		reportLines := make([]string, 0, 4)
 		if report.Updated > 0 {
@@ -56,14 +51,14 @@ var fetch = &cobra.Command{
 }
 
 func fetchInRuntime(ctx context.Context, manifest *manifest.Manifest, maxConcurrent uint, verbose int) (*git.FetchReport, error) {
-	rt, err := runtime.Start(ctx, uint(len(manifest.Repos())), maxConcurrent)
+	rt, err := runtime.Start(ctx, uint(len(manifest.Repos())))
 	if err != nil {
 		return nil, err
 	}
 	rt.Message = "Fetching"
 	defer rt.Cleanup()
 
-	report, err := git.Fetch(rt, *manifest, maxConcurrent, verbose)
+	report, err := git.Fetch(rt, *manifest)
 	if err != nil {
 		return nil, err
 	}

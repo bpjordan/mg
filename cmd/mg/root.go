@@ -1,38 +1,40 @@
 package mg
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/bpjordan/multigit/pkg/manifest"
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
+	man manifest.Manifest
 )
-
-var manifestContextKey struct{}
 
 var rootCmd = &cobra.Command{
 	Short: "multigit - tool for managing massive projects of multiple git repositories",
 
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 
-		manifestPath, err := cmd.Flags().GetString("manifest")
+		viper.BindPFlags(cmd.Flags())
+		viper.SetConfigName(".mg")
+		viper.SetConfigType("yaml")
+		viper.AddConfigPath("$HOME/.config/mg")
+		viper.AddConfigPath(".")
+
+		if manifestPath, _ := cmd.Flags().GetString("manifest"); manifestPath != "" {
+			viper.SetConfigFile(manifestPath)
+		}
+
+		err := viper.ReadInConfig()
 		if err != nil {
 			return err
 		}
 
-		manifestInventory, err := manifest.ReadManifest(manifestPath)
+		err = viper.Unmarshal(&man, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc()))
 		if err != nil {
 			return err
 		}
-
-		if manifestInventory == nil {
-			return fmt.Errorf("Manifest returned nil")
-		}
-
-		cmd.SetContext(context.WithValue(cmd.Context(), manifestContextKey, manifestInventory))
 
 		return nil
 	},
@@ -44,7 +46,7 @@ func Execute() {
 
 func init() {
 	flags := rootCmd.PersistentFlags()
-	flags.StringP("manifest", "m", ".mg.yml", "Path to the manifest YAML file")
+	flags.StringP("manifest", "m", "", "Path to the manifest YAML file")
 	flags.UintP("max-connections", "c", 0, "Limit the number of remote operations happening concurrently")
 	flags.CountP("verbose", "v", "")
 

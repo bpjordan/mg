@@ -8,6 +8,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/spf13/viper"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -24,7 +25,7 @@ type ParallelRuntime struct {
     sem *semaphore.Weighted
 }
 
-func Start(ctx context.Context, totalTasks, maxConcurrent uint) (*ParallelRuntime, error) {
+func Start(ctx context.Context, totalTasks uint) (*ParallelRuntime, error) {
 
     ctx, cancel := context.WithCancel(ctx)
     sb := &ParallelRuntime{
@@ -37,6 +38,7 @@ func Start(ctx context.Context, totalTasks, maxConcurrent uint) (*ParallelRuntim
 	cancel: cancel,
     }
 
+    maxConcurrent := viper.GetUint("max-connections")
     if maxConcurrent > 0 {
 	sb.sem = semaphore.NewWeighted(int64(maxConcurrent))
     }

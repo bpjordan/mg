@@ -7,6 +7,7 @@ import (
 	"github.com/bpjordan/multigit/pkg/runtime"
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
+	"github.com/spf13/viper"
 )
 
 type errorReport struct {
@@ -31,7 +32,7 @@ type FetchReport struct {
     Error uint
 }
 
-func Fetch(rt *runtime.ParallelRuntime, manifest manifest.Manifest, maxConcurrent uint, verbose int) (*FetchReport, error) {
+func Fetch(rt *runtime.ParallelRuntime, manifest manifest.Manifest) (*FetchReport, error) {
 
     taskStarted := make(chan string)
     taskFinished := make(chan taskReport)
@@ -43,6 +44,7 @@ func Fetch(rt *runtime.ParallelRuntime, manifest manifest.Manifest, maxConcurren
 
     var report FetchReport
 
+    verbose := viper.GetInt("verbose")
     for {
 
         select {
