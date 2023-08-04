@@ -53,13 +53,13 @@ func Fetch(rt *runtime.ParallelRuntime, manifest manifest.Manifest, maxConcurren
         case task := <- taskFinished:
             rt.PopTask(task.Name)
             printTaskReport(task, verbose)
-            switch task.Err {
-            case git.NoErrAlreadyUpToDate:
-                report.NoChange++
-            case nil:
+            switch {
+            case task.Err != nil:
+                report.Failed++
+            case task.Updated:
                 report.Updated++
             default:
-                report.Failed++
+                report.NoChange++
             }
         case task := <- taskError:
             rt.DecrementCounter()
@@ -74,7 +74,7 @@ func printTaskReport(report taskReport, verbose int) {
         fmt.Printf("%s (%s)\n", color.RedString("ERROR"), report.Name)
         println(report.Err.Error())
     } else if report.Updated {
-        fmt.Printf("%s (%s)\n", color.HiGreenString("FETCHED"), report.Name)
+        fmt.Printf("%s (%s)\n", color.HiGreenString("UPDATED"), report.Name)
     } else if verbose > 0 {
         fmt.Printf("%s (%s)\n", color.GreenString("NO CHANGES"), report.Name)
     }
