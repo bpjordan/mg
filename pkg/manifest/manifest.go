@@ -3,8 +3,8 @@ package manifest
 var CommandManifest Manifest
 
 type Manifest struct {
-	UnfilteredRepos []Repository `yaml:"repos" mapstructure:"repos"`
-	Groups map[string][]string `yaml:"groups,omitempty" mapstructure:"groups"`
+	UnfilteredRepos []Repository        `yaml:"repos" mapstructure:"repos"`
+	Groups          map[string][]string `yaml:"groups,omitempty" mapstructure:"groups"`
 }
 
 type Repository struct {
@@ -37,7 +37,7 @@ func (r *Repository) UnmarshalText(text []byte) error {
 	path := string(text)
 	r.Name = path
 	r.Path = path
+	r.Home = "main"
 
 	return nil
 }
-
