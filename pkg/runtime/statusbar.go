@@ -41,14 +41,7 @@ func (sb *ParallelRuntime) cleanupStatusBar() {
 func (sb *ParallelRuntime) renderStatusBar() {
 
     /// UPDATE POSITION
-    fmt.Print("\x1B7") // save cursor position
-    fmt.Print("\x1B[2K") // Erase current line
-    fmt.Print("\x1B[0J") // Erase from cursor to end of screen
-    fmt.Print("\x1B[?47h") // Save screen
-    fmt.Print("\x1B[1J") // Erase from cursor to beginning of screen
-    fmt.Print("\x1B[?47l") // Restore screen
 
-    defer fmt.Print("\x1B8") // Restore cursor position at end of execution
 
     numRemaining := sb.totalTasks - sb.remainingTasks
 
@@ -65,7 +58,14 @@ func (sb *ParallelRuntime) renderStatusBar() {
 	line = string([]rune(line)[:sb.wscol-1])
     }
 
-    fmt.Printf("\x1B[%d;H", sb.wsrow) // Set cursor position to reserved row
+    fmt.Print("\x1B7") // save cursor position
+    fmt.Print("\x1B[0J") // Erase from cursor to end of screen
+    fmt.Print("\x1B[?47h") // Save screen
+    fmt.Print("\x1B[1J") // Erase from cursor to beginning of screen
+    fmt.Print("\x1B[?47l") // Restore screen
+    fmt.Printf("\x1B[%d;0H", sb.wsrow) // Set cursor position to reserved row
+    fmt.Print("\x1B[2K") // Erase current line
     fmt.Print(line)
+    fmt.Print("\x1B8") // Restore cursor position at end of execution
 
 }
