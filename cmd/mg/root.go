@@ -1,7 +1,7 @@
 package mg
 
 import (
-	"github.com/bpjordan/multigit/pkg/manifest"
+	"github.com/bpjordan/mg/pkg/manifest"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

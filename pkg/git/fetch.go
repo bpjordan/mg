@@ -3,8 +3,8 @@ package git
 import (
 	"fmt"
 
-	"github.com/bpjordan/multigit/pkg/manifest"
-	"github.com/bpjordan/multigit/pkg/runtime"
+	"github.com/bpjordan/mg/pkg/manifest"
+	"github.com/bpjordan/mg/pkg/runtime"
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
 	"github.com/spf13/viper"

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bpjordan/multigit/pkg/runtime"
+	"github.com/bpjordan/mg/pkg/runtime"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

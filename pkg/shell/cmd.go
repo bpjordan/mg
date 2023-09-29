@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/bpjordan/multigit/pkg/manifest"
-	"github.com/bpjordan/multigit/pkg/runtime"
+	"github.com/bpjordan/mg/pkg/manifest"
+	"github.com/bpjordan/mg/pkg/runtime"
 	"github.com/fatih/color"
 )
 
