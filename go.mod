@@ -1,4 +1,4 @@
-module github.com/bpjordan/multigit
+module github.com/bpjordan/mg
 
 go 1.20
 
